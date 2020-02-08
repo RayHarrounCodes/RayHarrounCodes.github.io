@@ -1,0 +1,14 @@
+{
+  "name": "@rayharrouncodes/world-tour",
+  "main": "774cfec6927a6caf@232.js",
+  "version": "232.0.0",
+  "homepage": "https://observablehq.com/@rayharrouncodes/world-tour",
+  "author": {
+    "name": "rayharrouncodes",
+    "url": "https://observablehq.com/@rayharrouncodes"
+  },
+  "type": "module",
+  "peerDependencies": {
+    "@observablehq/runtime": "4"
+  }
+}
