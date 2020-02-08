@@ -1,49 +1,49 @@
-// https://observablehq.com/@rayharrouncodes/world-tour@232
+// https://observablehq.com/@mbostock/top-100-cities@263
 export default function define(runtime, observer) {
   const main = runtime.module();
   main.variable(observer()).define(["md"], function(md){return(
-md`# World Tour
+md`# Top 100 Cities
 
-This animation uses [d3.geoInterpolate](https://github.com/d3/d3-geo/blob/master/README.md#geoInterpolate) to interpolate a path along great arcs, and [spherical linear interpolation](https://en.wikipedia.org/wiki/Slerp) to rotate the [orthographic](/@d3/orthographic-projection) projection.`
+A tour of the most populous cities in the world. Data: [Natural Earth](https://www.naturalearthdata.com/downloads/10m-cultural-vectors/10m-populated-places/)`
 )});
-  main.variable(observer()).define(["html","name"], function(html,name){return(
-html`<b style="display:block;text-align:center;line-height:33px;">${name}`
+  main.variable(observer()).define(["city","html"], function(city,html){return(
+city ? html`<div style="display:block;text-align:center;"><b>${city.properties.name}, ${city.properties.adm0name}</b> #${city.properties.rank} <br>Population ${city.properties.pop_max.toLocaleString()}` : html``
 )});
-  main.variable(observer("canvas")).define("canvas", ["DOM","width","height","d3","sphere","land","borders","countries","mutable name","tilt","Versor"], async function*(DOM,width,height,d3,sphere,land,borders,countries,$0,tilt,Versor)
+  main.variable(observer("canvas")).define("canvas", ["DOM","width","height","d3","sphere","land","borders","cities","mutable city","tilt","Versor"], async function*(DOM,width,height,d3,sphere,land,borders,cities,$0,tilt,Versor)
 {
   const context = DOM.context2d(width, height);
-  const projection = d3.geoOrthographic().fitExtent([[10, 10], [width - 10, height - 10]], sphere);
-  const path = d3.geoPath(projection, context);
+  const projection = d3.geoOrthographic().fitExtent([[10, 10], [width - 10, height - 10]], sphere).precision(0.2);
+  const path = d3.geoPath(projection, context).pointRadius(1.5);
 
-  function render(country, arc) {
+  function render(arc) {
     context.clearRect(0, 0, width, height);
     context.beginPath(), path(land), context.fillStyle = "#ccc", context.fill();
-    context.beginPath(), path(country), context.fillStyle = "#f00", context.fill();
     context.beginPath(), path(borders), context.strokeStyle = "#fff", context.lineWidth = 0.5, context.stroke();
     context.beginPath(), path(sphere), context.strokeStyle = "#000", context.lineWidth = 1.5, context.stroke();
+    context.beginPath(), path(cities), context.fillStyle = "#000", context.fill();
     context.beginPath(), path(arc), context.stroke();
     return context.canvas;
   }
 
-  let p1, p2 = [0, 0], r1, r2 = [0, 0, 0];
-  for (const country of countries) {
-    $0.value = country.properties.name;
-    yield render(country);
+  let p1, p2, r1, r2;
+  for (const city of cities.features.slice().reverse()) {
+    $0.value = city;
+    yield render();
 
-    p1 = p2, p2 = d3.geoCentroid(country);
+    p1 = p2, p2 = city.geometry.coordinates;
     r1 = r2, r2 = [-p2[0], tilt - p2[1], 0];
-    const ip = d3.geoInterpolate(p1, p2);
-    const iv = Versor.interpolateAngles(r1, r2);
+    const ip = d3.geoInterpolate(p1 || p2, p2);
+    const iv = Versor.interpolateAngles(r1 || r2, r2);
 
     await d3.transition()
         .duration(1250)
         .tween("render", () => t => {
           projection.rotate(iv(t));
-          render(country, {type: "LineString", coordinates: [p1, ip(t)]});
+          render({type: "LineString", coordinates: [p1 || p2, ip(t)]});
         })
       .transition()
         .tween("render", () => t => {
-          render(country, {type: "LineString", coordinates: [ip(t), p2]});
+          render({type: "LineString", coordinates: [ip(t), p2]});
         })
       .end();
   }
@@ -106,11 +106,11 @@ class Versor {
   }
 }
 )});
-  main.define("initial name", function(){return(
-""
+  main.define("initial city", function(){return(
+null
 )});
-  main.variable(observer("mutable name")).define("mutable name", ["Mutable", "initial name"], (M, _) => new M(_));
-  main.variable(observer("name")).define("name", ["mutable name"], _ => _.generator);
+  main.variable(observer("mutable city")).define("mutable city", ["Mutable", "initial city"], (M, _) => new M(_));
+  main.variable(observer("city")).define("city", ["mutable city"], _ => _.generator);
   main.variable(observer("height")).define("height", ["width"], function(width){return(
 Math.min(width, 720)
 )});
@@ -120,9 +120,13 @@ Math.min(width, 720)
   main.variable(observer("sphere")).define("sphere", function(){return(
 {type: "Sphere"}
 )});
-  main.variable(observer("countries")).define("countries", ["topojson","world"], function(topojson,world){return(
-topojson.feature(world, world.objects.countries).features
-)});
+  main.variable(observer("cities")).define("cities", ["d3"], async function(d3)
+{
+  const cities = await d3.json("https://gist.githubusercontent.com/mbostock/ead0eec27ed87b0d39426a6229dc06eb/raw/35c9fbf28ec8090eeff35423d0bbc6432c80229c/cities-100.json");
+  cities.features.forEach((d, i) => d.properties.rank = i + 1);
+  return cities;
+}
+);
   main.variable(observer("borders")).define("borders", ["topojson","world"], function(topojson,world){return(
 topojson.mesh(world, world.objects.countries, (a, b) => a !== b)
 )});
@@ -130,7 +134,7 @@ topojson.mesh(world, world.objects.countries, (a, b) => a !== b)
 topojson.feature(world, world.objects.land)
 )});
   main.variable(observer("world")).define("world", ["d3"], function(d3){return(
-d3.json("https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json")
+d3.json("https://cdn.jsdelivr.net/npm/world-atlas@1/world/110m.json")
 )});
   main.variable(observer("topojson")).define("topojson", ["require"], function(require){return(
 require("topojson-client@3")

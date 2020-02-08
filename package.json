@@ -1,11 +1,11 @@
 {
-  "name": "@rayharrouncodes/world-tour",
-  "main": "774cfec6927a6caf@232.js",
-  "version": "232.0.0",
-  "homepage": "https://observablehq.com/@rayharrouncodes/world-tour",
+  "name": "@mbostock/top-100-cities",
+  "main": "10d70dac7f6c0dc7@263.js",
+  "version": "263.0.0",
+  "homepage": "https://observablehq.com/@mbostock/top-100-cities",
   "author": {
-    "name": "rayharrouncodes",
-    "url": "https://observablehq.com/@rayharrouncodes"
+    "name": "Mike Bostock",
+    "url": "https://observablehq.com/@mbostock"
   },
   "type": "module",
   "peerDependencies": {
